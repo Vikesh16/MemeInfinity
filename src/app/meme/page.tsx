@@ -19,11 +19,15 @@ import { useEffect ,useState} from 'react';
 import { Gallery, Item } from 'react-photoswipe-gallery'
 import 'photoswipe/dist/photoswipe.css'
 
-const MemeComponent: React.FC = () => {
+
+const YourComponent: React.FC = () => {
   const [data,setData]=useState<any>(null)
+  const [loading, setLoading] = useState<boolean>(false);
+  const [after, setAfter] = useState<string | null>(null);
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         let response = await fetch("https://www.reddit.com/r/memes.json?limit=1000");
          response = await response.json();
          setData(response);
@@ -31,10 +35,25 @@ const MemeComponent: React.FC = () => {
         console.log(response)
       } catch (error) {
         console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop ===document.documentElement.offsetHeight
+      ) {
+        fetchData();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
     fetchData();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
  
@@ -54,7 +73,11 @@ const MemeComponent: React.FC = () => {
          height="400"
        >
             {({ ref, open }) => (
-        <img ref={ref} onClick={open} src={e.data.url} alt={e.data.thumbnail}  className="h-48 w-48" />
+        <img ref={ref} onClick={open} src={e.data.url} alt={e.data.thumbnail}  className="h-48 w-48" 
+        onError={(e) => {
+          e.currentTarget.src = '/meme.jpeg';
+         
+        }} />
       )}
          
           </Item>
@@ -63,9 +86,10 @@ const MemeComponent: React.FC = () => {
          
         </div>
       )}
+      {loading && <p>Loading...</p>}
     </div>
   );
 };
 
-export default MemeComponent;
+export default YourComponent;
 
